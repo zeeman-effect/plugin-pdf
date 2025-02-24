@@ -1,0 +1,14 @@
+# Node modules
+node_modules
+
+# Dist
+dist
+
+# Logs
+logs
+
+# Data
+data
+
+# Environment variables
+.env

@@ -1,0 +1,54 @@
+{
+  "name": "@zeeman-effect/plugin-pdf",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "description": "Maiar plugin that allows agents to interact with PDF files",
+  "keywords": [
+    "maiar",
+    "plugin",
+    "pdf",
+    "zeeman"
+  ],
+  "author": "zeeman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zeeman-effect/plugin-pdf.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zeeman-effect/plugin-pdf/issues"
+  },
+  "homepage": "https://github.com/zeeman-effect/plugin-pdf#readme",
+  "scripts": {
+    "build": "pnpm run clean && tsc --project tsconfig.json",
+    "clean": "rm -rf dist",
+    "dev": "pnpm run build --watch",
+    "prepublishOnly": "pnpm run build"
+  },
+  "packageManager": "pnpm@10.4.1",
+  "dependencies": {
+    "@maiar-ai/core": "^0.9.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/pdf-parse": "^1.1.4"
+  }
+}
