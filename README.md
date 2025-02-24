@@ -1,6 +1,6 @@
 # @zeeman-effect/plugin-pdf
 
-This package is a plugin for the (Maiar)[https://maiar.dev] AI ecosystem, designed to work with the `@maiar-ai/core` package.
+This package is a plugin for the [Maiar](https://maiar.dev) AI ecosystem, designed to work with the `@maiar-ai/core` package.
 
 ## Documentation
 
