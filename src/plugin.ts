@@ -41,12 +41,6 @@ export class PluginPDF extends PluginBase {
       execute: this.handlePDF.bind(this),
     });
     this.addExecutor({
-      name: "analyzePDFFromPrompt",
-      description:
-        "Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
-      execute: this.analyzePDFFromPrompt.bind(this),
-    });
-    this.addExecutor({
       name: "analyzePDFFromSegment",
       description:
         "Analyze a segment of the PDF using the full text as context",
@@ -195,30 +189,6 @@ export class PluginPDF extends PluginBase {
       };
     } catch (error) {
       return { success: false, error: "Error parsing PDF data." };
-    }
-  }
-
-  private async analyzePDFFromPrompt(
-    context: AgentContext
-  ): Promise<PluginResult> {
-    // Find the last user input in the context chain
-    const userInputContext = context.contextChain.find(
-      (item) => item.type === "user_input"
-    ) as UserInputContext;
-    if (!userInputContext) {
-      return { success: false, error: "No user input found in context." };
-    }
-
-    const prompt = `
-        Using previous conversation context related to the pdf file, answer the following question:
-        ${userInputContext.rawMessage}
-        `;
-
-    try {
-      const result = await this.runtime.operations.getText(prompt);
-      return { success: true, data: result };
-    } catch (error) {
-      return { success: false, error: "Error analyzing PDF from prompt." };
     }
   }
 }
