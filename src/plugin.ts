@@ -30,6 +30,11 @@ export class PluginPDF extends PluginBase {
         "Handle data from a PDF file. Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
     });
     this.addExecutor({
+      name: "receive_pdf",
+      description: "Receive a PDF file from the user",
+      execute: this.receivePDF.bind(this),
+    });
+    this.addExecutor({
       name: "send_response",
       description: "Send a response to use of PDF analysis",
       execute: this.handleSendMessage.bind(this),
@@ -50,6 +55,42 @@ export class PluginPDF extends PluginBase {
       path.join(process.cwd(), "src", "prompts", "pdf.txt"),
       "utf-8"
     );
+  }
+
+  private async receivePDF( 
+    context: AgentContext
+  ): Promise<PluginResult> {
+    const platformContext = context?.platformContext as PDFPluginContext;
+    if (!platformContext?.responseHandler) {
+      return {
+        success: false,
+        error: "No response handler found in platform context"
+      };
+    }
+
+    try {
+      const pdfData = await this.runtime.operations.getObject(
+        PDFResponseSchema,
+        generateResponseTemplate(context.contextChain),
+        { temperature: 0.2 }
+      );
+
+      await platformContext.responseHandler(pdfData);
+      return {
+        success: true,
+        data: {
+          pdfData,
+          helpfulInstructions: this.helpfulInstructions,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: `Failed to receive PDF: ${errorMessage}`
+      };
+    }
   }
 
   private async handleSendMessage(
