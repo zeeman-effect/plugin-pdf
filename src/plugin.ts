@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import pdf from "pdf-parse";
+import * as pdfjsLib from 'pdfjs-dist';
 
 import { PluginBase, AgentContext, PluginResult, UserInputContext } from "@maiar-ai/core";
 
@@ -34,10 +34,21 @@ export class PluginPDF extends PluginBase {
         this.helpfulInstructions = fs.readFileSync(path.join(process.cwd(), "src", "prompts", "pdf.txt"), "utf-8");
     }
 
-    private async parsePDF(buffer: Buffer): Promise<PDFResponse> {
-        const data = await pdf(buffer);
+    private async parsePDF(buffer: ArrayBuffer): Promise<PDFResponse> {
+        // Load the PDF document using pdfjs-dist
+        const data = await pdfjsLib.getDocument(buffer).promise;
+        let fullText = '';
+        
+        // Extract text from all pages
+        for (let i = 1; i <= data.numPages; i++) {
+            const page = await data.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+        
         return {
-            text: data.text
+            text: fullText
         };
     }
 
@@ -45,7 +56,7 @@ export class PluginPDF extends PluginBase {
         try {
             const response = await fetch(url);
             const buffer = await response.arrayBuffer();
-            const pdfData = await this.parsePDF(Buffer.from(buffer));
+            const pdfData = await this.parsePDF(buffer);
             return { success: true, data: {
                 pdfData,
                 helpfulInstructions: this.helpfulInstructions,

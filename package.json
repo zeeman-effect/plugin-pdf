@@ -1,6 +1,6 @@
 {
   "name": "@zeeman-effect/plugin-pdf",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -46,7 +46,7 @@
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
     "@maiar-ai/core": "^0.9.0",
-    "pdf-parse": "^1.1.1"
+    "pdfjs-dist": "^4.10.38"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",
