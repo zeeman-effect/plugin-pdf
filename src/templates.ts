@@ -22,12 +22,5 @@ export function generateResponseTemplate(
     Your job is to synthesize the context chain into a comprehensive and useful response to the user's intitial message.
 
     Return a JSON object with a single "message" field containing your response.
-    The response should contain ALL of the necessary data from the original request.
-    It should NOT be a summary of the data and NOT a mere indication of the data's existence. 
-    It should be the COMPLETE response to the original message or request with ALL necessary information.
-    Example of valid response:
-    {
-        "message": "I'm doing well! How can I help you today?"
-    }
     `;
 }

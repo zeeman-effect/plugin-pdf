@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-export interface PDFResponse {
-    text: string;
-}
-
-export const PDFResponseTemplate = z.object({
-    message: z.string()
+export const PDFResponseSchema = z.object({
+    message: z.string().describe("The message to be sent to the user"),
 });
-
-export type PDFResponseType = z.infer<typeof PDFResponseTemplate>;

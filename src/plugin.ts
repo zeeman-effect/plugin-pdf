@@ -10,12 +10,12 @@ import {
 } from "@maiar-ai/core";
 
 // Local imports
+import { PDFResponseSchema } from "./types";
 import { generateResponseTemplate } from "./templates";
-import { PDFResponse } from "./types";
 
 interface PDFPluginContext {
   platform: string;
-  responseHandler: (message: string) => Promise<void>;
+  responseHandler: (response: unknown) => void;
   metadata?: Record<string, unknown>;
 }
 
@@ -31,37 +31,8 @@ export class PluginPDF extends PluginBase {
     });
     this.addExecutor({
       name: "send_response",
-      description: "Handles chat interface with the user",
-      execute: async (context): Promise<PluginResult> => {
-        const platformContext = context?.platformContext as PDFPluginContext;
-        if (!platformContext?.responseHandler) {
-          console.error("[PDF Plugin] Error: No response handler available");
-          return {
-            success: false,
-            error: "No response handler available",
-          };
-        }
-
-        try {
-          const message = await this.runtime.llm.getText(
-            generateResponseTemplate(context.contextChain)
-          );
-          return {
-            success: true,
-            data: {
-              message: message,
-              helpfulInstruction:
-                "This is the formatted response sent to the terminal",
-            },
-          };
-        } catch (error) {
-          console.error("[PDF Plugin] Error sending response:", error);
-          return {
-            success: false,
-            error: "Failed to send response",
-          };
-        }
-      },
+      description: "Send a response to use of PDF analysis",
+      execute: this.handleSendMessage.bind(this),
     });
     this.addExecutor({
       name: "handlePDF",
@@ -87,7 +58,44 @@ export class PluginPDF extends PluginBase {
     );
   }
 
-  private async parsePDF(buffer: ArrayBuffer): Promise<PDFResponse> {
+  private async handleSendMessage(
+    context: AgentContext
+  ): Promise<PluginResult> {
+    const platformContext = context?.platformContext as PDFPluginContext;
+    if (!platformContext?.responseHandler) {
+      return {
+        success: false,
+        error: "No response handler found in platform context"
+      };
+    }
+
+    try {
+      // Format the response based on the context chain
+      const formattedResponse = await this.runtime.operations.getObject(
+        PDFResponseSchema,
+        generateResponseTemplate(context.contextChain),
+        { temperature: 0.2 }
+      );
+
+      await platformContext.responseHandler(formattedResponse.message);
+      return {
+        success: true,
+        data: {
+          message: "Hello, world!",
+          helpfulInstructions: this.helpfulInstructions,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      return {
+        success: false,
+        error: `Failed to send message: ${errorMessage}`
+      };
+    }
+  }
+
+  private async parsePDF(buffer: ArrayBuffer): Promise<{ text: string }> {
     // Load the PDF document using pdfjs-dist
     const data = await pdfjsLib.getDocument(buffer).promise;
     let fullText = "";

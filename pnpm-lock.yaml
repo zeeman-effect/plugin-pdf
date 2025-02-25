@@ -15,15 +15,12 @@ importers:
         specifier: ^4.10.38
         version: 4.10.38
       zod:
-        specifier: ^3.24.2
-        version: 3.24.2
+        specifier: 3.24.1
+        version: 3.24.1
     devDependencies:
       '@types/node':
         specifier: ^22.13.5
         version: 22.13.5
-      '@types/pdf-parse':
-        specifier: ^1.1.4
-        version: 1.1.4
       tsup:
         specifier: ^8.3.6
         version: 8.3.6(typescript@5.7.3)
@@ -382,9 +379,6 @@ packages:
 
   '@types/node@22.13.5':
     resolution: {integrity: sha512-+lTU0PxZXn0Dr1NBtC7Y8cR21AJr87dLLU953CWA6pMxxv/UDc7jYAY90upcrie1nRcD6XNG5HOYEDtgW5TxAg==}
-
-  '@types/pdf-parse@1.1.4':
-    resolution: {integrity: sha512-+gbBHbNCVGGYw1S9lAIIvrHW47UYOhMIFUsJcMkMrzy1Jf0vulBN3XQIjPgnoOXveMuHnF3b57fXROnY/Or7eg==}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -942,9 +936,6 @@ packages:
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
-
 snapshots:
 
   '@esbuild/aix-ppc64@0.24.2':
@@ -1177,8 +1168,6 @@ snapshots:
   '@types/node@22.13.5':
     dependencies:
       undici-types: 6.20.0
-
-  '@types/pdf-parse@1.1.4': {}
 
   abort-controller@3.0.0:
     dependencies:
@@ -1728,5 +1717,3 @@ snapshots:
   wrappy@1.0.2: {}
 
   zod@3.24.1: {}
-
-  zod@3.24.2: {}
