@@ -1,9 +1,17 @@
 /* eslint-disable no-useless-escape */
 import { BaseContextItem } from "@maiar-ai/core";
 
+interface PDFData extends BaseContextItem {
+  text?: string;
+}
+
 export function generateResponseTemplate(
   contextChain: BaseContextItem[]
 ): string {
+  // Only add the pdfData.text to the context if it exists
+  const pdfData: PDFData | undefined = contextChain.find((item) => item.action === "handlePDF");
+  const pdfText = pdfData ? pdfData.text : "";
+
   return `Generate a response based on the context chain. Your response should be a JSON object with a single "message" field containing your response.
     The response should be related to the original message you received from the user. 
 
@@ -17,7 +25,7 @@ export function generateResponseTemplate(
     Look for the relevant information in the most recent context items (e.g. generated text, current time, etc).
 
     Here is the Context Chain of the users initial message, and your internal operations which generated useful data for your response:
-    ${JSON.stringify(contextChain, null, 2)}
+    ${pdfText}
 
     Your job is to synthesize the context chain into a comprehensive and useful response to the user's intitial message.
 
