@@ -78,7 +78,8 @@ export class PluginPDF extends PluginBase {
         }
         
         // Extract the text from the user input segment using parsePDF
-        const pdfResponse = await this.parsePDF(Buffer.from(pdfData, 'base64'));
+        const buffer = Buffer.from(pdfData, 'base64').buffer;
+        const pdfResponse = await this.parsePDF(buffer);
         
         try {
             const prompt = `
@@ -113,7 +114,8 @@ export class PluginPDF extends PluginBase {
         }
 
         try {
-            const pdfResponse = await this.parsePDF(Buffer.from(pdfData, 'base64'));
+            const buffer = Buffer.from(pdfData, 'base64').buffer;
+            const pdfResponse = await this.parsePDF(buffer);
             return { success: true, data: {
                 pdfResponse,
                 helpfulInstructions: this.helpfulInstructions,
