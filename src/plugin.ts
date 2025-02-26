@@ -30,16 +30,6 @@ export class PluginPDF extends PluginBase {
         "Handle data from a PDF file. Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
     });
     this.addExecutor({
-      name: "receive_pdf",
-      description: "Receive a PDF file from the user",
-      execute: this.receivePDF.bind(this),
-    });
-    this.addExecutor({
-      name: "send_response",
-      description: "Send a response to use of PDF analysis",
-      execute: this.handleSendMessage.bind(this),
-    });
-    this.addExecutor({
       name: "handlePDF",
       description:
         "Handle a PDF file from a buffer or URL and add the text to the conversation context for further analysis",
@@ -204,8 +194,7 @@ export class PluginPDF extends PluginBase {
       return { success: false, error: "No user input found in context." };
     }
 
-    // Extract the URL from the user input, even if it is part of a
-    // larger message
+    // Extract the URL from the user input, even if it is part of a larger message
     const pdfData = userInputContext.rawMessage;
     if (!pdfData) {
       return { success: false, error: "No PDF data found in user input." };
