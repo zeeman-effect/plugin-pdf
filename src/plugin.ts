@@ -7,21 +7,14 @@ import {
   AgentContext,
   PluginResult,
   UserInputContext,
+  BaseContextItem,
 } from "@maiar-ai/core";
 
 // Local imports
 import { PDFResponseSchema } from "./types";
-import { generateResponseTemplate } from "./templates";
-
-interface PDFPluginContext {
-  platform: string;
-  responseHandler: (response: unknown) => void;
-  metadata?: Record<string, unknown>;
-}
+import { generatePDFResponseTemplate } from "./templates";
 
 export class PluginPDF extends PluginBase {
-  private helpfulInstructions: string;
-
   constructor() {
     super({
       id: "plugin-pdf",
@@ -30,96 +23,44 @@ export class PluginPDF extends PluginBase {
         "Handle data from a PDF file. Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
     });
     this.addExecutor({
-      name: "handlePDF",
+      name: "analyze_pdf",
       description:
-        "Handle a PDF file from a buffer or URL and add the text to the conversation context for further analysis",
-      execute: this.handlePDF.bind(this),
+        "Use the full text of the PDF and context chain to answer a user question",
+      execute: this.analyze_pdf.bind(this),
     });
     this.addExecutor({
-      name: "analyzePDFFromSegment",
-      description:
-        "Analyze a segment of the PDF using the full text as context",
-      execute: this.analyzePDFFromSegment.bind(this),
+      name: "add_pdf_to_context",
+      description: "Download a PDF file from a URL, or local file, and add the full text to the context chain",
+      execute: this.add_pdf_to_context.bind(this),
     });
-    this.helpfulInstructions = fs.readFileSync(
-      path.join(process.cwd(), "src", "prompts", "pdf.txt"),
-      "utf-8"
-    );
   }
 
-  private async receivePDF( 
-    context: AgentContext
-  ): Promise<PluginResult> {
-    const platformContext = context?.platformContext as PDFPluginContext;
-    if (!platformContext?.responseHandler) {
-      return {
-        success: false,
-        error: "No response handler found in platform context"
-      };
+  private async analyze_pdf(context: AgentContext): Promise<PluginResult> {
+    // Get the user question from the context chain
+    const userQuestion = context.contextChain.find(
+      (item) => item.type === "user_input"
+    ) as UserInputContext;
+    if (!userQuestion) {
+      return { success: false, error: "No user question found in context." };
     }
 
     try {
-      const pdfData = await this.runtime.operations.getObject(
+      const result = await this.runtime.operations.getObject(
         PDFResponseSchema,
-        generateResponseTemplate(context.contextChain),
+        generatePDFResponseTemplate(userQuestion.rawMessage, context.contextChain),
         { temperature: 0.2 }
       );
-
-      await platformContext.responseHandler(pdfData);
-      return {
-        success: true,
-        data: {
-          pdfData,
-          helpfulInstructions: this.helpfulInstructions,
-        },
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      return {
-        success: false,
-        error: `Failed to receive PDF: ${errorMessage}`
-      };
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: `Error generating PDF response. ${error}` };
     }
   }
 
-  private async handleSendMessage(
-    context: AgentContext
-  ): Promise<PluginResult> {
-    const platformContext = context?.platformContext as PDFPluginContext;
-    if (!platformContext?.responseHandler) {
-      return {
-        success: false,
-        error: "No response handler found in platform context"
-      };
-    }
-
-    try {
-      // Format the response based on the context chain
-      const formattedResponse = await this.runtime.operations.getObject(
-        PDFResponseSchema,
-        generateResponseTemplate(context.contextChain),
-        { temperature: 0.2 }
-      );
-
-      await platformContext.responseHandler(formattedResponse.message);
-      return {
-        success: true,
-        data: {
-          message: "Hello, world!",
-          helpfulInstructions: this.helpfulInstructions,
-        },
-      };
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      return {
-        success: false,
-        error: `Failed to send message: ${errorMessage}`
-      };
-    }
-  }
-
+  /**
+   * Parse a PDF file from an ArrayBuffer and return the full text
+   * @param buffer - The buffer of the PDF file
+   * @returns Promise<{text: string}> The full text of the PDF file
+   */
   private async parsePDF(buffer: ArrayBuffer): Promise<{ text: string }> {
     // Load the PDF document using pdfjs-dist
     const data = await pdfjsLib.getDocument(buffer).promise;
@@ -138,85 +79,76 @@ export class PluginPDF extends PluginBase {
     };
   }
 
-  private async downloadPDF(url: string): Promise<PluginResult> {
-    try {
-      const response = await fetch(url);
-      const buffer = await response.arrayBuffer();
-      const pdfData = await this.parsePDF(buffer);
-      return {
-        success: true,
-        data: {
-          pdfData,
-          helpfulInstructions: this.helpfulInstructions,
-        },
-      };
-    } catch (error) {
-      return { success: false, error: "Error downloading PDF." };
-    }
+  private async downloadPDF(url: string): Promise<{ text: string }> {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    return await this.parsePDF(buffer);
   }
 
-  private async analyzePDFFromSegment(
-    context: AgentContext
-  ): Promise<PluginResult> {
+  private async retrieveLocalPDF(filePath: string): Promise<{ text: string }> {
+    const buffer = fs.readFileSync(filePath);
+    return await this.parsePDF(buffer);
+  }
+
+  /**
+   * Add the full text of the PDF to the context chain
+   * @param context - The context of the agent
+   * @returns Promise<PluginResult> The result of the operation
+   */
+  private async add_pdf_to_context(context: AgentContext): Promise<PluginResult> {
     const userInputContext = context.contextChain.find(
       (item) => item.type === "user_input"
     ) as UserInputContext;
-    if (!userInputContext) {
+    if (!userInputContext || !userInputContext.rawMessage) {
       return { success: false, error: "No user input found in context." };
     }
 
-    const pdfData = userInputContext.rawMessage;
-    if (!pdfData) {
-      return { success: false, error: "No PDF data found in user input." };
-    }
+    let pdfData: { text: string } | undefined;
 
-    // Extract the text from the user input segment using parsePDF
-    const buffer = Buffer.from(pdfData, "base64").buffer;
-    const pdfResponse = await this.parsePDF(buffer);
-
-    try {
-      const prompt = `
-            Analyze the following text using the full text of the PDF as context:
-            ${pdfResponse.text}
-            `;
-      const result = await this.runtime.operations.getText(prompt);
-      return { success: true, data: result };
-    } catch (error) {
-      return { success: false, error: "Error parsing PDF data." };
-    }
-  }
-
-  private async handlePDF(context: AgentContext): Promise<PluginResult> {
-    const userInputContext = context.contextChain.find(
-      (item) => item.type === "user_input"
-    ) as UserInputContext;
-    if (!userInputContext) {
-      return { success: false, error: "No user input found in context." };
-    }
-
-    // Extract the URL from the user input, even if it is part of a larger message
-    const pdfData = userInputContext.rawMessage;
-    if (!pdfData) {
-      return { success: false, error: "No PDF data found in user input." };
-    }
-
+    // Check for URL
     const urlMatch = userInputContext.rawMessage.match(/https?:\/\/[^\s]+/);
     if (urlMatch) {
-      const url = urlMatch[0];
-      const pdfData = await this.downloadPDF(url);
-      return pdfData;
+      try {
+        const url = urlMatch[0];
+        pdfData = await this.downloadPDF(url);
+      } catch (error) {
+        return { success: false, error: "Error downloading PDF." };
+      }
+    }
+
+    // Check for local file path
+    const filePathMatch = userInputContext.rawMessage.match(/file:\/\/[^\s]+/);
+    if (filePathMatch) {
+      try {
+        const filePath = filePathMatch[0];
+        pdfData = await this.retrieveLocalPDF(filePath);
+      } catch (error) {
+        return { success: false, error: "Error retrieving local PDF." };
+      }
+    }
+
+    // If the PDF data is not a URL, assume it is a base64 encoded string
+    if (!pdfData) {
+      try {
+        const buffer = Buffer.from(userInputContext.rawMessage, "base64").buffer;
+        pdfData = await this.parsePDF(buffer);
+      } catch (error) {
+        return { success: false, error: "Error parsing base64 encoded PDF." };
+      }
     }
 
     try {
-      const buffer = Buffer.from(pdfData, "base64").buffer;
-      const pdfResponse = await this.parsePDF(buffer);
-      return {
-        success: true,
-        data: {
-          pdfResponse,
-          helpfulInstructions: this.helpfulInstructions,
-        },
+
+      const pdfContext: BaseContextItem = {
+        id: `pdf-${Date.now()}`,
+        pluginId: this.id,
+        type: "pdf",
+        action: "add_pdf_to_context",
+        content: pdfData.text,
+        timestamp: Date.now(),
       };
+      context.contextChain.push(pdfContext);
+      return {success: true};
     } catch (error) {
       return { success: false, error: "Error parsing PDF data." };
     }
