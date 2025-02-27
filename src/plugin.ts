@@ -13,7 +13,7 @@ import { PDFResponseSchema } from "./types";
 import { generatePDFResponseTemplate } from "./templates";
 import { History, ExtendedMemoryService } from "./sqlite";
 export class PluginPDF extends PluginBase {
-  private memoryService: ExtendedMemoryService;
+  private memoryService!: ExtendedMemoryService;
 
   constructor() {
     super({
@@ -22,7 +22,12 @@ export class PluginPDF extends PluginBase {
       description:
         "Handle data from a PDF file. Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
     });
-    this.memoryService = this.runtime.memory as ExtendedMemoryService;
+    this.addTrigger({
+      id: "setup_pdf_plugin",
+      start: () => {
+        this.memoryService = this.runtime.memory as ExtendedMemoryService;
+      }
+    });
     this.addExecutor({
       name: "analyze_pdf",
       description:
