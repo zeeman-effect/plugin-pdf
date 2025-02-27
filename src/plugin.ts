@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import * as pdfjsLib from "pdfjs-dist";
 
 import {
@@ -7,14 +6,15 @@ import {
   AgentContext,
   PluginResult,
   UserInputContext,
-  BaseContextItem,
 } from "@maiar-ai/core";
 
 // Local imports
 import { PDFResponseSchema } from "./types";
 import { generatePDFResponseTemplate } from "./templates";
-
+import { History, ExtendedMemoryService } from "./sqlite";
 export class PluginPDF extends PluginBase {
+  private memoryService: ExtendedMemoryService;
+
   constructor() {
     super({
       id: "plugin-pdf",
@@ -22,6 +22,7 @@ export class PluginPDF extends PluginBase {
       description:
         "Handle data from a PDF file. Analyze the text and image in the PDF file and add it to the conversation context for further analysis",
     });
+    this.memoryService = this.runtime.memory as ExtendedMemoryService;
     this.addExecutor({
       name: "analyze_pdf",
       description:
@@ -138,16 +139,15 @@ export class PluginPDF extends PluginBase {
     }
 
     try {
-
-      const pdfContext: BaseContextItem = {
+      const pdfTextHistory: History = {
         id: `pdf-${Date.now()}`,
-        pluginId: this.id,
         type: "pdf",
-        action: "add_pdf_to_context",
+        conversationId: `plugin-pdf-${userInputContext.id}`,
         content: pdfData.text,
         timestamp: Date.now(),
       };
-      context.contextChain.push(pdfContext);
+
+      await this.memoryService.storeHistory(pdfTextHistory, `plugin-pdf-${userInputContext.id}`);
       return {success: true};
     } catch (error) {
       return { success: false, error: "Error parsing PDF data." };
