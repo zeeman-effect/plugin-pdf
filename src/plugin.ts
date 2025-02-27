@@ -86,8 +86,8 @@ export class PluginPDF extends PluginBase {
   }
 
   private async retrieveLocalPDF(filePath: string): Promise<{ text: string }> {
-    const buffer = fs.readFileSync(filePath);
-    return await this.parsePDF(buffer);
+    const buffer = fs.readFileSync(filePath) as Buffer<ArrayBuffer>;
+    return await this.parsePDF(buffer.buffer);
   }
 
   /**
