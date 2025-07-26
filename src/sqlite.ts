@@ -157,6 +157,7 @@ export class SQLiteProvider implements SQLiteMemoryProvider {
   }
 
   async storeHistory(history: History, conversationId: string): Promise<void> {
+    console.log('[SQLite] Storing history', history);
     const stmt = this.db.prepare(`
             INSERT INTO history (id, conversation_id, type, content, timestamp)
             VALUES (?, ?, ?, ?, ?)

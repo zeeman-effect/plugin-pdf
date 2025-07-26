@@ -144,6 +144,7 @@ export class PluginPDF extends PluginBase {
     }
 
     try {
+      console.log('[PDF Plugin] Adding PDF to history');
       const pdfTextHistory: History = {
         id: `pdf-${Date.now()}`,
         type: "pdf",
@@ -151,7 +152,6 @@ export class PluginPDF extends PluginBase {
         content: pdfData.text,
         timestamp: Date.now(),
       };
-
       await this.memoryService.storeHistory(pdfTextHistory, `plugin-pdf-${userInputContext.id}`);
       return {success: true};
     } catch (error) {

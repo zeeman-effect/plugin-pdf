@@ -1,7 +1,6 @@
 {
   "name": "@zeeman-effect/plugin-pdf",
-  "version": "0.0.12",
-  "type": "module",
+  "version": "0.0.13",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -45,15 +44,15 @@
   },
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
-    "@maiar-ai/core": "^0.9.0",
+    "@maiar-ai/core": "^0.10.0",
     "better-sqlite3": "^11.8.1",
     "pdfjs-dist": "^4.10.38",
-    "zod": "3.24.1"
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.13.5",
-    "tsup": "^8.3.6",
+    "tsup": "^8.4.0",
     "typescript": "^5.7.3"
   },
   "pnpm": {
@@ -61,5 +60,8 @@
       "better-sqlite3",
       "esbuild"
     ]
-  }
+  },
+  "workspaces": [
+    "example_project"
+  ]
 }

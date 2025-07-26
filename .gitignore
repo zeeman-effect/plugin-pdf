@@ -12,3 +12,6 @@ data
 
 # Environment variables
 .env
+
+# Example project
+example_project
